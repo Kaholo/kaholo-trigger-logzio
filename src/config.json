@@ -1,0 +1,51 @@
+{
+  "name": "logzio-trigger",
+  "type": "trigger",
+  "execProgram": "node",
+  "main": "app.js",
+  "exposeRoute": true,
+  "imgUrl": "logo.png",
+  "version": "1.0.0",
+  "description": "Handle logz.io alert endpoint",
+  "methods": [
+    {
+      "name": "ALERT_WEBHOOK",
+      "route": "post /webhook/logzio/alert",
+      "viewName": "Logz.io alert webhook",
+      "params": [
+        {
+          "name": "ALERT_TITLE",
+          "viewName": "Alert Title",
+          "type": "string"
+        },
+        {
+          "name": "SEVERITY",
+          "viewName": "Severity",
+          "type":"options",
+          "options": [
+            {
+              "id": "Severe",
+              "name": "Severe"
+            },
+            {
+              "id": "High",
+              "name": "High"
+            },
+            {
+              "id": "Medium",
+              "name": "Medium"
+            },
+            {
+              "id": "Low",
+              "name": "Low"
+            },
+            {
+              "id": "Info",
+              "name": "Info"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
