@@ -1,40 +1,26 @@
-const config = require("./config");
-const mapExecutionService = require("../../../api/services/map-execution.service");
-const Trigger = require("../../../api/models/map-trigger.model");
-
-function alertWebhook(req,res) {
-    let body = req.body
-    Trigger.find({ plugin: config.name }).then((triggers) => {
-        console.log(`Found ${triggers.length} triggers`);
-        res.send('OK');
-        triggers.forEach(trigger=>execTrigger(trigger,body,req.io))
-    }).catch((error) => res.send(error))
-}
-
-function execTrigger (trigger, body,io) {
-    new Promise ((resolve,reject) => {
-        const alertTitle = body.alert_title
-        const alertSeverity = body.alert_severity
-        const triggerAlertTitle = trigger.params.find(o => o.name === 'ALERT_TITLE');
-        const triggerAlertSeverity = trigger.params.find(o => o.name === 'SEVERITY');
-        if (!alertTitle.startsWith(triggerAlertTitle.value)) {
-            console.log(alertID, triggerAlertID.value)
-            return reject("Not matching alert ID")
-        } else if (alertSeverity != triggerAlertSeverity.value) {
-            console.log(alertID, triggerAlertID.value)
-            return reject("Not matching alert ID")
-        } else {
-            return resolve()
+function alertWebhook(req, res, settings, triggerControllers) {
+    try { 
+        const body = req.body;
+        const {alert_title: reqTitle, alert_severity: reqSeverity} = body;
+        if (!reqTitle || !reqSeverity){
+            return res.status(400).send("Bad Webhook Format");
         }
-    }).then(() => {
-        console.log(trigger.map);
-        let message = trigger.name + ' started by Datadog trigger'
-        console.log(`********** Datadog: executing map ${trigger.map} **********`);
-        mapExecutionService.execute(trigger.map,null,io,{config: trigger.configuration},message,body);
-    }).catch(err=>{
-        console.error(err);
-    })
+    
+        triggerControllers.forEach(trigger => {
+            const {ALERT_TITLE: title, SEVERITY: severity} = trigger.params;
+    
+            if (title && !minimatch(reqTitle, title)) return;
+            if (severity && reqSeverity !== severity) return;
+    
+            trigger.execute(reqTitle, body);
+        });
+        res.status(200).send("OK");
+    }
+    catch (err){
+      res.status(422).send(err.message);
+    }
 }
+
 module.exports = {
     ALERT_WEBHOOK: alertWebhook
 }
